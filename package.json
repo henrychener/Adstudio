@@ -2,9 +2,9 @@
   "name": "adstudio",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "engines": {
-    "node": ">=20.0.0",
-    "npm": ">=10.0.0"
+    "node": "20"
   },
   "scripts": {
     "dev": "next dev",
