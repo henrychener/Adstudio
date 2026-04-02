@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Image, Sparkles, Settings, Upload, Film, Loader2, Plus } from "lucide-react";
+import {
+  Image,
+  Sparkles,
+  Settings,
+  Upload,
+  Film,
+  Loader2,
+  Plus,
+  ChevronDown,
+} from "lucide-react";
 import { VideoAsset, uploadVideo, listVideos } from "@/lib/videoStorage";
 
 const PROJECTS = [
@@ -19,12 +28,53 @@ const PROJECTS = [
   },
 ];
 
+interface SectionProps {
+  icon: React.ReactNode;
+  label: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}
+
+function Section({ icon, label, open, onToggle, children }: SectionProps) {
+  return (
+    <div className="border-b border-[#f3f4f6]">
+      {/* Header row */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-[#f9fafb] transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="text-sm font-medium text-[#1a1a1a]">{label}</span>
+        </div>
+        <ChevronDown
+          className="w-3.5 h-3.5 text-[#9ca3af] transition-transform duration-200"
+          style={{ transform: open ? "rotate(0deg)" : "rotate(-90deg)" }}
+        />
+      </button>
+
+      {/* Collapsible content — grid-rows trick for smooth height animation */}
+      <div
+        className="grid transition-all duration-200 ease-in-out"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   onAddToCanvas: (asset: VideoAsset) => void;
 }
 
 export default function LeftSidebar({ onAddToCanvas }: Props) {
-  const [activeTab, setActiveTab] = useState<"assets" | "templates">("assets");
+  const [assetsOpen, setAssetsOpen] = useState(true);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+
   const [videos, setVideos] = useState<VideoAsset[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -37,15 +87,16 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
       const list = await listVideos();
       setVideos(list);
     } catch {
-      // Supabase not configured yet — fail silently
+      // Supabase not configured — fail silently
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Fetch when Assets section is first opened
   useEffect(() => {
-    if (activeTab === "assets") fetchVideos();
-  }, [activeTab, fetchVideos]);
+    if (assetsOpen) fetchVideos();
+  }, [assetsOpen, fetchVideos]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,7 +110,6 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
-      // Reset so same file can be re-selected
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -67,7 +117,7 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
   return (
     <aside className="fixed left-4 top-[72px] bottom-4 w-[210px] bg-white rounded-xl shadow-sm border border-[#e5e7eb] flex flex-col overflow-hidden z-40">
       {/* Header */}
-      <div className="px-4 pt-4 pb-2">
+      <div className="px-4 pt-4 pb-3">
         <p className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider">
           Library
         </p>
@@ -76,37 +126,17 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
         </h2>
       </div>
 
-      {/* Tabs */}
-      <div className="px-3 flex flex-col gap-1">
-        <button
-          onClick={() => setActiveTab("assets")}
-          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-            activeTab === "assets"
-              ? "bg-[#f3f4f6] text-[#1a1a1a] font-medium"
-              : "text-[#6b7280] hover:bg-[#f9fafb]"
-          }`}
+      {/* Accordion sections */}
+      <div className="flex-1 overflow-y-auto">
+        {/* ── Assets ── */}
+        <Section
+          icon={<Image className="w-4 h-4 text-[#e11d48]" />}
+          label="Assets"
+          open={assetsOpen}
+          onToggle={() => setAssetsOpen((v) => !v)}
         >
-          <Image className="w-4 h-4 text-[#e11d48]" />
-          Assets
-        </button>
-        <button
-          onClick={() => setActiveTab("templates")}
-          className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-            activeTab === "templates"
-              ? "bg-[#f3f4f6] text-[#1a1a1a] font-medium"
-              : "text-[#6b7280] hover:bg-[#f9fafb]"
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          Templates
-        </button>
-      </div>
-
-      {activeTab === "assets" && (
-        <>
-          {/* Upload button */}
-          <div className="px-3 pt-3">
-            {/* Restrict to browser-playable formats. MOV/AVI/HEVC require server-side transcoding. */}
+          <div className="px-3 pb-3 pt-1 flex flex-col gap-3">
+            {/* Upload button */}
             <input
               ref={fileInputRef}
               type="file"
@@ -132,44 +162,47 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
               )}
             </button>
             {uploadError && (
-              <p className="text-[11px] text-red-500 mt-1 px-1">{uploadError}</p>
+              <p className="text-[11px] text-red-500 -mt-1 px-0.5">{uploadError}</p>
             )}
-          </div>
 
-          {/* Video list */}
-          <div className="px-3 pt-3 flex-1 overflow-y-auto">
+            {/* Video grid */}
             {loading ? (
-              <div className="flex items-center justify-center py-8">
+              <div className="flex items-center justify-center py-6">
                 <Loader2 className="w-5 h-5 animate-spin text-[#9ca3af]" />
               </div>
             ) : videos.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <Film className="w-8 h-8 text-[#d1d5db] mb-2" />
-                <p className="text-[12px] text-[#9ca3af]">No videos yet</p>
-                <p className="text-[11px] text-[#c4c9d4] mt-0.5">Upload one to get started</p>
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <Film className="w-7 h-7 text-[#d1d5db] mb-1.5" />
+                <p className="text-[11px] text-[#9ca3af]">No videos yet</p>
+                <p className="text-[10px] text-[#c4c9d4] mt-0.5">Upload one to get started</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
                 {videos.map((video) => (
-                  <VideoThumbnail
-                    key={video.id}
-                    video={video}
-                    onAdd={onAddToCanvas}
-                  />
+                  <VideoThumbnail key={video.id} video={video} onAdd={onAddToCanvas} />
                 ))}
               </div>
             )}
           </div>
-        </>
-      )}
+        </Section>
 
-      {activeTab === "templates" && (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-[12px] text-[#9ca3af]">Templates coming soon</p>
-        </div>
-      )}
+        {/* ── Templates ── */}
+        <Section
+          icon={<Sparkles className="w-4 h-4 text-[#6b7280]" />}
+          label="Templates"
+          open={templatesOpen}
+          onToggle={() => setTemplatesOpen((v) => !v)}
+        >
+          <div className="px-3 pb-4 pt-1">
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <Sparkles className="w-7 h-7 text-[#d1d5db] mb-1.5" />
+              <p className="text-[11px] text-[#9ca3af]">Coming soon</p>
+            </div>
+          </div>
+        </Section>
+      </div>
 
-      {/* Projects Section */}
+      {/* Projects */}
       <div className="border-t border-[#e5e7eb] px-4 pt-3 pb-3 flex-shrink-0">
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] font-semibold text-[#9ca3af] uppercase tracking-wider">
@@ -188,8 +221,10 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
               <div className="w-8 h-8 rounded-md overflow-hidden flex-shrink-0">
                 <img src={project.thumb} alt={project.name} className="w-full h-full object-cover" />
               </div>
-              <div>
-                <p className="text-[13px] font-medium text-[#1a1a1a] leading-tight">{project.name}</p>
+              <div className="min-w-0">
+                <p className="text-[13px] font-medium text-[#1a1a1a] leading-tight truncate">
+                  {project.name}
+                </p>
                 <p className="text-[9px] text-[#9ca3af] uppercase">{project.date}</p>
               </div>
             </div>
@@ -200,7 +235,6 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
   );
 }
 
-// Separate component so each thumbnail manages its own video preview
 function VideoThumbnail({ video, onAdd }: { video: VideoAsset; onAdd: (v: VideoAsset) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -226,10 +260,8 @@ function VideoThumbnail({ video, onAdd }: { video: VideoAsset; onAdd: (v: VideoA
         muted
         loop
         playsInline
-        onError={() => {/* format unsupported — thumbnail stays black */}}
+        onError={() => {}}
       />
-
-      {/* Overlay with add button on hover */}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
         <button
           onClick={() => onAdd(video)}
@@ -239,8 +271,6 @@ function VideoThumbnail({ video, onAdd }: { video: VideoAsset; onAdd: (v: VideoA
           Add
         </button>
       </div>
-
-      {/* Filename label */}
       <div className="absolute bottom-0 left-0 right-0 px-1.5 py-1 bg-gradient-to-t from-black/70 to-transparent">
         <p className="text-[9px] text-white/90 truncate">{video.name}</p>
       </div>
