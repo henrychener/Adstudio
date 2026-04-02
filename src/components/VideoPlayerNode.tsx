@@ -51,8 +51,14 @@ export default function VideoPlayerNode({
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
-    if (isPlaying) { v.pause(); } else { v.play(); }
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      v.pause();
+      setIsPlaying(false);
+    } else {
+      v.play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => console.error("Video play failed:", err));
+    }
   }, [isPlaying]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {

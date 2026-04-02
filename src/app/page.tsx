@@ -1,7 +1,6 @@
 import Navbar from "@/components/Navbar";
 import ChatPanel from "@/components/ChatPanel";
 import Toolbar from "@/components/Toolbar";
-import SequenceTimeline from "@/components/SequenceTimeline";
 import StudioLayout from "@/components/StudioLayout";
 
 export default function Home() {
@@ -19,9 +18,8 @@ export default function Home() {
       <Navbar />
       <ChatPanel />
       <Toolbar />
-      <SequenceTimeline />
 
-      {/* StudioLayout owns LeftSidebar + CanvasWorkspace (shared video node state) */}
+      {/* StudioLayout owns LeftSidebar + SequenceTimeline + CanvasWorkspace */}
       <StudioLayout />
     </>
   );

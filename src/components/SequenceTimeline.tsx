@@ -1,30 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { Plus, GripHorizontal } from "lucide-react";
+import { CanvasVideoNode } from "./StudioLayout";
 
-const CLIPS = [
-  {
-    id: 1,
-    src: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=240&h=144&fit=crop",
-    label: "04s",
-    active: true,
-  },
-  {
-    id: 2,
-    src: "https://images.unsplash.com/photo-1493238792000-8113da705763?w=240&h=144&fit=crop",
-    label: "08s",
-    active: false,
-  },
-  {
-    id: 3,
-    src: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=240&h=144&fit=crop",
-    label: "12s",
-    active: false,
-  },
-];
+interface Props {
+  nodes: CanvasVideoNode[];
+}
 
-export default function SequenceTimeline() {
+export default function SequenceTimeline({ nodes }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
   const posRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef<{ startX: number; startY: number; nodeX: number; nodeY: number } | null>(null);
@@ -32,7 +16,6 @@ export default function SequenceTimeline() {
   useEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    // Position at bottom of workspace area
     const workspaceLeft = 230;
     const workspaceRight = 316;
     const workspaceWidth = window.innerWidth - workspaceLeft - workspaceRight;
@@ -98,33 +81,45 @@ export default function SequenceTimeline() {
             Live Preview
           </span>
         </div>
+
         <div className="flex items-center gap-3">
-          {CLIPS.map((clip) => (
-            <div
-              key={clip.id}
-              className={`w-[100px] h-[60px] rounded-lg overflow-hidden relative flex-shrink-0 cursor-pointer transition-colors ${
-                clip.active
-                  ? "border-2 border-[#e11d48]"
-                  : "border border-[#e5e7eb] hover:border-[#e11d48]"
-              }`}
-            >
-              <img
-                src={clip.src}
-                alt={`Clip ${clip.id}`}
-                className="w-full h-full object-cover"
-                draggable={false}
-              />
-              <span className="absolute bottom-1 right-1.5 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded font-mono">
-                {clip.label}
-              </span>
-            </div>
+          {nodes.map((node, i) => (
+            <ClipThumbnail key={node.id} node={node} active={i === 0} />
           ))}
+
           <div className="w-[100px] h-[60px] rounded-lg border-2 border-dashed border-[#d1d5db] flex flex-col items-center justify-center cursor-pointer hover:border-[#e11d48] hover:bg-[#fef2f2] transition-colors flex-shrink-0">
             <Plus className="w-4 h-4 text-[#9ca3af]" />
             <span className="text-[9px] text-[#9ca3af] mt-0.5 uppercase tracking-wider">Add Clip</span>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ClipThumbnail({ node, active }: { node: CanvasVideoNode; active: boolean }) {
+  const [duration, setDuration] = useState<string>("--");
+
+  return (
+    <div
+      className={`w-[100px] h-[60px] rounded-lg overflow-hidden relative flex-shrink-0 cursor-pointer bg-[#0a0a0a] transition-colors ${
+        active ? "border-2 border-[#e11d48]" : "border border-[#e5e7eb] hover:border-[#e11d48]"
+      }`}
+    >
+      <video
+        src={node.src}
+        className="w-full h-full object-cover"
+        preload="metadata"
+        muted
+        playsInline
+        onLoadedMetadata={(e) => {
+          const secs = Math.round(e.currentTarget.duration);
+          setDuration(`${secs}s`);
+        }}
+      />
+      <span className="absolute bottom-1 right-1.5 text-[10px] text-white bg-black/60 px-1.5 py-0.5 rounded font-mono">
+        {duration}
+      </span>
     </div>
   );
 }

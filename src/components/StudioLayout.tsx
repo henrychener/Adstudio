@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import LeftSidebar from "./LeftSidebar";
+import SequenceTimeline from "./SequenceTimeline";
 import { VideoAsset } from "@/lib/videoStorage";
 
 const CanvasWorkspace = dynamic(() => import("./CanvasWorkspace"), {
@@ -10,7 +11,7 @@ const CanvasWorkspace = dynamic(() => import("./CanvasWorkspace"), {
 });
 
 export interface CanvasVideoNode {
-  id: string;       // unique instance id (multiple copies of same asset allowed)
+  id: string;
   assetId: string;
   name: string;
   src: string;
@@ -34,6 +35,7 @@ export default function StudioLayout() {
   return (
     <>
       <LeftSidebar onAddToCanvas={addToCanvas} />
+      <SequenceTimeline nodes={nodes} />
       <CanvasWorkspace nodes={nodes} />
     </>
   );
