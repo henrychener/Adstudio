@@ -1,26 +1,27 @@
 import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
-import VideoPlayer from "@/components/VideoPlayer";
 import ChatPanel from "@/components/ChatPanel";
+import CanvasWorkspaceLoader from "@/components/CanvasWorkspaceLoader";
 
 export default function Home() {
   return (
     <>
-      {/* Canvas background with grid */}
+      {/* CSS dot grid background — zero GPU cost */}
       <div
         className="fixed inset-0 bg-[#f0f0f0]"
         style={{
           backgroundImage:
-            "linear-gradient(to right, #e0e0e0 1px, transparent 1px), linear-gradient(to bottom, #e0e0e0 1px, transparent 1px)",
+            "radial-gradient(circle, #c0c0c0 1px, transparent 1px)",
           backgroundSize: "24px 24px",
         }}
       />
 
-      {/* Floating panels layered on top of canvas */}
       <Navbar />
       <LeftSidebar />
-      <VideoPlayer />
       <ChatPanel />
+
+      {/* WebGL canvas workspace with draggable nodes */}
+      <CanvasWorkspaceLoader />
     </>
   );
 }
