@@ -76,7 +76,8 @@ export default function CanvasWorkspace({ nodes }: Props) {
     })();
 
     const ro = new ResizeObserver(() => {
-      if (!destroyed && container) {
+      // Guard: app.renderer only exists after app.init() resolves
+      if (!destroyed && pixiReadyRef.current) {
         app.renderer.resize(container.clientWidth, container.clientHeight);
       }
     });

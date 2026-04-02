@@ -34,6 +34,7 @@ export default function VideoPlayerNode({
   const posRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef<{ startX: number; startY: number; nodeX: number; nodeY: number } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [formatError, setFormatError] = useState(false);
 
   useEffect(() => {
     const el = nodeRef.current;
@@ -120,8 +121,20 @@ export default function VideoPlayerNode({
           preload="metadata"
           playsInline
           onEnded={() => setIsPlaying(false)}
+          onError={() => setFormatError(true)}
           draggable={false}
         />
+
+        {/* Format not supported overlay */}
+        {formatError && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 gap-2">
+            <span className="text-2xl">⚠️</span>
+            <p className="text-white text-xs font-medium">Format not supported</p>
+            <p className="text-white/60 text-[11px] text-center px-6">
+              Please upload MP4 (H.264) or WebM
+            </p>
+          </div>
+        )}
 
         {/* Controls overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-5 pb-4 pt-12">

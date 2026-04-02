@@ -106,10 +106,11 @@ export default function LeftSidebar({ onAddToCanvas }: Props) {
         <>
           {/* Upload button */}
           <div className="px-3 pt-3">
+            {/* Restrict to browser-playable formats. MOV/AVI/HEVC require server-side transcoding. */}
             <input
               ref={fileInputRef}
               type="file"
-              accept="video/*"
+              accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -225,6 +226,7 @@ function VideoThumbnail({ video, onAdd }: { video: VideoAsset; onAdd: (v: VideoA
         muted
         loop
         playsInline
+        onError={() => {/* format unsupported — thumbnail stays black */}}
       />
 
       {/* Overlay with add button on hover */}
