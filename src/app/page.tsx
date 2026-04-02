@@ -2,6 +2,8 @@ import Navbar from "@/components/Navbar";
 import LeftSidebar from "@/components/LeftSidebar";
 import ChatPanel from "@/components/ChatPanel";
 import CanvasWorkspaceLoader from "@/components/CanvasWorkspaceLoader";
+import Toolbar from "@/components/Toolbar";
+import SequenceTimeline from "@/components/SequenceTimeline";
 
 export default function Home() {
   return (
@@ -19,6 +21,8 @@ export default function Home() {
       <Navbar />
       <LeftSidebar />
       <ChatPanel />
+      <Toolbar />
+      <SequenceTimeline />
 
       {/* WebGL canvas workspace with draggable nodes */}
       <CanvasWorkspaceLoader />

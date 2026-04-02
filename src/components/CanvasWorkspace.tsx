@@ -87,17 +87,16 @@ export default function CanvasWorkspace() {
     const g = selectionRef.current;
     if (!g) return;
     g.clear();
-    g.roundRect(x - 4, y - 4, w + 8, h + 8, 6).stroke({ width: 2, color: 0xe11d48 });
+    // Thin, subtle border — 1px, soft gray
+    g.roundRect(x - 3, y - 3, w + 6, h + 6, 6)
+     .stroke({ width: 1, color: 0x888888, alpha: 0.35 });
   }, []);
 
   const clearGuides = useCallback(() => {
     guidesRef.current?.clear();
   }, []);
 
-  const drawGuides = useCallback((
-    snapX: number | null, snapY: number | null,
-    nodeX: number, nodeY: number, nodeW: number, nodeH: number
-  ) => {
+  const drawGuides = useCallback((centerX: number | null, centerY: number | null) => {
     const g = guidesRef.current;
     const container = containerRef.current;
     if (!g || !container) return;
@@ -106,29 +105,30 @@ export default function CanvasWorkspace() {
     const W = container.clientWidth;
     const H = container.clientHeight;
 
-    if (snapX !== null) drawDashedLine(g, snapX, 0, snapX, H);
-    if (snapY !== null) drawDashedLine(g, 0, snapY, W, snapY);
-    // Also snap lines for right/bottom edges
-    if (snapX !== null && snapX === nodeX + nodeW) drawDashedLine(g, snapX, 0, snapX, H);
-    if (snapY !== null && snapY === nodeY + nodeH) drawDashedLine(g, 0, snapY, W, snapY);
+    // Lines pass through the element's center point
+    if (centerX !== null) drawDashedLine(g, centerX, 0, centerX, H);
+    if (centerY !== null) drawDashedLine(g, 0, centerY, W, centerY);
 
-    if (snapX !== null || snapY !== null) {
-      g.stroke({ width: 1, color: 0xe11d48, alpha: 0.75 });
+    if (centerX !== null || centerY !== null) {
+      g.stroke({ width: 1, color: 0x3b82f6, alpha: 0.7 });
     }
   }, []);
 
   const snapAndDraw = useCallback((
     rawX: number, rawY: number, w: number, h: number
   ): { x: number; y: number } => {
-    const snappedX = Math.round(rawX / GRID_SIZE) * GRID_SIZE;
-    const snappedY = Math.round(rawY / GRID_SIZE) * GRID_SIZE;
-    const useSnapX = Math.abs(rawX - snappedX) < SNAP_THRESHOLD;
-    const useSnapY = Math.abs(rawY - snappedY) < SNAP_THRESHOLD;
-    const x = useSnapX ? snappedX : rawX;
-    const y = useSnapY ? snappedY : rawY;
+    // Snap by center point so guide lines intersect at element center
+    const cx = rawX + w / 2;
+    const cy = rawY + h / 2;
+    const snappedCX = Math.round(cx / GRID_SIZE) * GRID_SIZE;
+    const snappedCY = Math.round(cy / GRID_SIZE) * GRID_SIZE;
+    const useSnapX = Math.abs(cx - snappedCX) < SNAP_THRESHOLD;
+    const useSnapY = Math.abs(cy - snappedCY) < SNAP_THRESHOLD;
+    const x = useSnapX ? snappedCX - w / 2 : rawX;
+    const y = useSnapY ? snappedCY - h / 2 : rawY;
 
     drawSelection(x, y, w, h);
-    drawGuides(useSnapX ? x : null, useSnapY ? y : null, x, y, w, h);
+    drawGuides(useSnapX ? snappedCX : null, useSnapY ? snappedCY : null);
 
     return { x, y };
   }, [drawSelection, drawGuides]);
