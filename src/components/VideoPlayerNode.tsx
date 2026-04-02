@@ -12,13 +12,25 @@ import {
 } from "lucide-react";
 
 interface Props {
+  src: string;
+  name?: string;
+  initialX?: number;
+  initialY?: number;
   onDragUpdate: (x: number, y: number, w: number, h: number) => { x: number; y: number };
   onDragEnd: (x: number, y: number, w: number, h: number) => { x: number; y: number };
   onMount: (x: number, y: number, w: number, h: number) => void;
 }
 
-export default function VideoPlayerNode({ onDragUpdate, onDragEnd, onMount }: Props) {
+export default function VideoPlayerNode({
+  src,
+  initialX,
+  initialY,
+  onDragUpdate,
+  onDragEnd,
+  onMount,
+}: Props) {
   const nodeRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const posRef = useRef({ x: 0, y: 0 });
   const dragRef = useRef<{ startX: number; startY: number; nodeX: number; nodeY: number } | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -28,13 +40,20 @@ export default function VideoPlayerNode({ onDragUpdate, onDragEnd, onMount }: Pr
     if (!el) return;
     const container = el.parentElement;
     if (!container) return;
-    const x = Math.max(0, Math.round((container.clientWidth - el.offsetWidth) / 2));
-    const y = Math.max(0, Math.round((container.clientHeight - el.offsetHeight) / 2));
+    const x = initialX ?? Math.max(0, Math.round((container.clientWidth - el.offsetWidth) / 2));
+    const y = initialY ?? Math.max(0, Math.round((container.clientHeight - el.offsetHeight) / 2));
     posRef.current = { x, y };
     el.style.transform = `translate(${x}px, ${y}px)`;
     onMount(x, y, el.offsetWidth, el.offsetHeight);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (isPlaying) { v.pause(); } else { v.play(); }
+    setIsPlaying(!isPlaying);
+  }, [isPlaying]);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     e.preventDefault();
@@ -88,21 +107,20 @@ export default function VideoPlayerNode({ onDragUpdate, onDragEnd, onMount }: Pr
 
       {/* Video element */}
       <div className="relative w-full aspect-video bg-[#0a0a0a] rounded-xl overflow-hidden shadow-xl">
-        <img
-          src="https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1280&h=720&fit=crop"
-          alt="City night scene"
+        <video
+          ref={videoRef}
+          src={src}
           className="w-full h-full object-cover"
+          preload="metadata"
+          playsInline
+          onEnded={() => setIsPlaying(false)}
           draggable={false}
         />
 
         {/* Controls overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-5 pb-4 pt-12">
           <div className="w-full h-[3px] bg-white/20 rounded-full mb-3 relative cursor-pointer group">
-            <div className="h-full bg-[#e11d48] rounded-full" style={{ width: "30%" }} />
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-[#e11d48] rounded-full shadow opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ left: "30%" }}
-            />
+            <div className="h-full bg-[#e11d48] rounded-full" style={{ width: "0%" }} />
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -110,7 +128,7 @@ export default function VideoPlayerNode({ onDragUpdate, onDragEnd, onMount }: Pr
                 <SkipBack className="w-5 h-5" fill="currentColor" />
               </button>
               <button
-                onClick={() => setIsPlaying(!isPlaying)}
+                onClick={togglePlay}
                 className="text-white hover:scale-110 transition-transform"
               >
                 {isPlaying
@@ -123,7 +141,6 @@ export default function VideoPlayerNode({ onDragUpdate, onDragEnd, onMount }: Pr
               </button>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-white/90 text-sm font-mono tracking-wide">01:24 / 04:30</span>
               <button className="text-white/70 hover:text-white transition-colors">
                 <Volume2 className="w-4 h-4" />
               </button>

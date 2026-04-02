@@ -1,11 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
-const CanvasWorkspace = dynamic(() => import("./CanvasWorkspace"), {
-  ssr: false,
-});
-
+// This file exists because Next.js 16 requires ssr:false inside a client component.
+// StudioLayout now owns CanvasWorkspace directly with dynamic(), so this loader
+// is no longer needed as a standalone — kept for potential future use.
 export default function CanvasWorkspaceLoader() {
-  return <CanvasWorkspace />;
+  return null;
 }

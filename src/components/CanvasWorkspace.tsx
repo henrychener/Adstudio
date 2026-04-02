@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { Application, Graphics } from "pixi.js";
 import VideoPlayerNode from "./VideoPlayerNode";
+import { CanvasVideoNode } from "./StudioLayout";
 
 const GRID_SIZE = 24;
 const SNAP_THRESHOLD = 8;
@@ -29,12 +30,20 @@ function drawDashedLine(
   }
 }
 
-export default function CanvasWorkspace() {
+const NODE_WIDTH = 560;
+const NODE_HEIGHT = 340; // approx aspect-video height at 560px wide
+
+interface Props {
+  nodes: CanvasVideoNode[];
+}
+
+export default function CanvasWorkspace({ nodes }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const selectionRef = useRef<Graphics | null>(null);
   const guidesRef = useRef<Graphics | null>(null);
   const pixiReadyRef = useRef(false);
+  const selectedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -173,11 +182,31 @@ export default function CanvasWorkspace() {
 
       {/* DOM node layer */}
       <div className="absolute inset-0" style={{ zIndex: 2 }}>
-        <VideoPlayerNode
-          onDragUpdate={handleDragUpdate}
-          onDragEnd={handleDragEnd}
-          onMount={handleMount}
-        />
+        {nodes.map((node, i) => {
+          // Stagger new nodes so they don't all land on top of each other
+          const offset = i * 40;
+          return (
+            <VideoPlayerNode
+              key={node.id}
+              src={node.src}
+              name={node.name}
+              initialX={offset}
+              initialY={offset}
+              onDragUpdate={(x, y, w, h) => {
+                selectedIdRef.current = node.id;
+                return handleDragUpdate(x, y, w, h);
+              }}
+              onDragEnd={(x, y, w, h) => {
+                selectedIdRef.current = node.id;
+                return handleDragEnd(x, y, w, h);
+              }}
+              onMount={(x, y, w, h) => {
+                selectedIdRef.current = node.id;
+                handleMount(x, y, w, h);
+              }}
+            />
+          );
+        })}
       </div>
     </div>
   );
